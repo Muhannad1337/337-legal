@@ -1,0 +1,19 @@
+name: Keep Supabase awake
+# Pings the 337 Supabase project daily so the free-tier project never
+# auto-pauses (a paused project breaks sync and fails App Review). The anon
+# key is RLS-protected and safe; it is stored as the repo secret SUPABASE_ANON_KEY.
+on:
+  schedule:
+    - cron: '0 6 * * *'   # daily at 06:00 UTC
+  workflow_dispatch: {}
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            "https://wwkhjfmyarzhuzhlxarx.supabase.co/rest/v1/tags?select=id&limit=1")
+          echo "Supabase responded: HTTP $code"
+          if [ "$code" = "000" ]; then echo "No response from Supabase"; exit 1; fi
